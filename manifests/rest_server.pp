@@ -1,16 +1,20 @@
 # restic rest server class
 
 class restic::rest_server (
-  String $version = '0.10.0',
-  String $arch = 'linux_amd64',
-  String $bin_dir = '/usr/local/bin',
-  String $service_name = 'rest-server',
-  String $service_user = 'restic',
-  String $service_group = 'restic',
-  String $backups_path = '/tmp/restic',
-  String $server_parameters = '',
+  Array[String] $extra_groups = [],
+  Boolean $manage_group = true,
+  Boolean $manage_user = true,
   Boolean $service_active = true,
   Boolean $service_enable = true,
+  String $arch = 'linux_amd64',
+  String $backups_path = '/tmp/restic',
+  String $bin_dir = '/usr/local/bin',
+  String $group = 'restic',
+  String $server_parameters = '',
+  String $service_name = 'rest-server',
+  String $user = 'restic',
+  String $usershell = '/usr/sbin/nologin',
+  String $version = '0.10.0',
 ) {
   archive { "/tmp/rest-server-${version}.tar.gz":
     ensure          => present,
@@ -20,7 +24,6 @@ class restic::rest_server (
     checksum_verify => false,
     creates         => "/opt/rest-server_${version}_${arch}/rest-server",
     cleanup         => true,
-    extract_command => $prometheus::extract_command,
   }
   -> file { "/opt/rest-server_${version}_${arch}/rest-server":
     owner => 'root',
@@ -29,13 +32,33 @@ class restic::rest_server (
   }
   -> file { "${bin_dir}/rest-server":
     ensure => link,
-    notify => Service[$service_name],
     target => "/opt/rest-server_${version}_${arch}/rest-server",
   }
 
   ~> systemd::unit_file { "${service_name}.service":
-   content => "puppet:///modules/${module_name}/rest-server.service.erb",
+   content => template("${module_name}/rest-server.service.erb"),
    enable => true,
    active => true,
   }
+
+  if $manage_user {
+    User[$user] ~> Systemd::Unit_file["${service_name}.service"]
+    ensure_resource('user', [$user], {
+        ensure => 'present',
+        system => true,
+        groups => $extra_groups,
+        shell  => $usershell,
+    })
+
+    if $manage_group {
+      Group[$group] -> User[$user]
+    }
+  }
+  if $manage_group {
+    ensure_resource('group', [$group], {
+        ensure => 'present',
+        system => true,
+    })
+  }
+
 }
