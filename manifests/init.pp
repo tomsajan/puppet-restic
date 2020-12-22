@@ -5,9 +5,10 @@
 # @example
 #   include restic
 class restic(
-  $version             = '0.9.5',
-  $checksum            = '08cd75e56a67161e9b16885816f04b2bf1fb5b03bc0677b0ccf3812781c1a2ec',
+  $version             = '0.11.0',
+  $checksum            = 'f559e774c91f1201ffddba74d5758dec8342ad2b50a3bcd735ccb0c88839045c',
   $checksum_type       = 'sha256',
+  $arch                = 'amd64',
   $default_environment = [],
 ) {
   archive { '/tmp/restic.bz2':
@@ -15,7 +16,7 @@ class restic(
     extract         => true,
     extract_path    => '/usr/local/bin',
     extract_command => 'bunzip2 -c %s > /usr/local/bin/restic',
-    source          => "https://github.com/restic/restic/releases/download/v${version}/restic_${version}_linux_amd64.bz2",
+    source          => "https://github.com/restic/restic/releases/download/v${version}/restic_${version}_linux_${arch}.bz2",
     checksum        => $checksum,
     checksum_type   => $checksum_type,
     cleanup         => true,
