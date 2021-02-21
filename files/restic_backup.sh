@@ -2,7 +2,7 @@
 
 push_metrics()
 {
-  if [ "$TEXTFILE_COLLECTOR" = true ] ; then
+  if [ "$TEXTFILE_COLLECTOR" == "true" ] ; then
     # Write out metrics to a temporary file if textfile collecting is enabled
     echo "$1" > "$TEXTFILE_COLLECTOR_DIR/restic-snapshot.prom.$$"
     # move the textfile atomically (to avoid the exporter seeing half a file)
@@ -18,7 +18,7 @@ log()
   echo "[$(date '+%F %T %Z')] $@"
 }
 
-while getopts ":r:s:f:b:t" opt; do
+while getopts ":r:s:f:b:d:t:" opt; do
   case ${opt} in
     r )
       REPO=$OPTARG
@@ -32,9 +32,11 @@ while getopts ":r:s:f:b:t" opt; do
     b )
       BACKUP_ARGS=$OPTARG
       ;;
+    d )
+      TEXTFILE_COLLECTOR_DIR=$OPTARG
+      ;;
     t )
-      TEXTFILE_COLLECTOR=true
-      TEXTFILE_COLLECTOR_DIR=/var/lib/node_exporter/textfile_collector
+      TEXTFILE_COLLECTOR=$OPTARG
       ;;
     \? )
       echo "Invalid option: $OPTARG" 1>&2
@@ -49,6 +51,7 @@ done
 shift $((OPTIND -1))
 
 : "${FORGET_ARGS:="--keep-last 7"}"
+: "${TEXTFILE_COLLECTOR_DI:="/var/lib/node_exporter/textfile_collector"}"
 
 if test -z "${REPO}" || test -z "${SOURCE}" ; then
   echo "Usage: $(basename "$0") -r <repo> -s <source> [-f <forget_args>] [-b <backup_args>] [-t]" 1>&2
@@ -57,7 +60,7 @@ fi
 
 PATH="/usr/local/bin:$PATH" # Add restic cmd dir to path (if not set in crontab)
 
-if [ "$TEXTFILE_COLLECTOR" = true ] ; then
+if [ "$TEXTFILE_COLLECTOR" == "true" ] ; then
   # clean up old textfile
   rm "$TEXTFILE_COLLECTOR_DIR/restic-snapshot$(echo $SOURCE | tr '/' '_' | tr ' ' '+').prom"
 fi
