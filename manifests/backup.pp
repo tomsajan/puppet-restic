@@ -32,7 +32,7 @@ define restic::backup (
 ) {
   cron { $title:
     ensure      => $ensure,
-    command     => "/usr/local/bin/restic_backup.sh -r ${repo} -s '${files}' -f '${forget_flags}' -b '${backup_flags}' -t '${textfile_flag}' -d '${textfile_dir_flag}'>> /var/log/restic/${title}.log",
+    command     => "/usr/local/bin/restic_backup.sh -r ${repo} -s '${files}' -f '${forget_flags}' -b '${backup_flags}' -t '${textfile_flag}' -d '${textfile_dir_flag}' >> /var/log/restic/${title}.log",
     user        => $cron_user,
     weekday     => $cron_day,
     hour        => $cron_hour,
